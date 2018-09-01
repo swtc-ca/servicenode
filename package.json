@@ -1,0 +1,21 @@
+{
+  "name": "jingtumnode",
+  "version": "1.0.0",
+  "description": "",
+  "main": "helper.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "jingtum-lib": "^1.3.7",
+    "moment": "^2.22.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
