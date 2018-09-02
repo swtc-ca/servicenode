@@ -67,7 +67,12 @@ function readStream(file) {
 	return rs;
 }
 
+function random_item(items){
+	return items[Math.floor(Math.random() * items.length)];
+}
+
 module.exports = {
+	random_item,
 	WALLET_ROOT,
 	readFile,
 	writeFile,

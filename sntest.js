@@ -6,9 +6,10 @@ var SYNCED = false;
 var ACCOUNTS = [];
 var WALLETS_ACCOUNT = [];
 var WALLETS = [];
+const TIMEOUT_MAX = 30000
 var TIMEOUT = 0;
 var TIMEOUT_ACT = 0;
-const ADDRESS_COUNT = 110;
+const ADDRESS_COUNT = 10;
 const WALLET_ROOT = helper.WALLET_ROOT;
 const LOGFILE = moment().format('MMDDHHmm');
 var write_file = helper.writeStream(`${LOGFILE}.txt`);
@@ -78,13 +79,36 @@ helper.swtNodeRequest(helper.rpcSwtNodeParam({method: target_accounts.method, pa
 		.catch( error => { console.warn(`!!! ${target_accounts.method} error`)})
 
 //setTimeout( () => helper.readStream(`${LOGFILE}.txt`), 2000)
-setInterval( () => startStress() , 10000)
+setInterval( () => startStress() , TIMEOUT_MAX)
 
+var STRESSING = false
 function startStress() {
 	console.log(`... check if we can start generating transactions or not`);
 	filter_activated = (element) => element.hasOwnProperty('activated');
-	WALLETS_ACCOUNT.filter(filter_activated).length > 4 || console.log("   ...please prepare more accouns")
-	WALLETS.filter(filter_activated).length > 20 || console.log("   ...please prepare more wallets")
+	if ( ! STRESSING ) {
+		if ( WALLETS_ACCOUNT.filter(filter_activated).length == WALLETS_ACCOUNT.length  && WALLETS.filter(filter_activated).length == ADDRESS_COUNT ) {
+			console.log("   ...startstressing...")
+			stress();
+		} else {
+			console.log("   ...please prepare more wallets or accounts(10+) and make sure root account is there")
+		}
+	} else {
+		console.log("   ...stressing...")
+	}
+}
+
+function stress() {
+	let timeout = 1000
+	iter = 0
+	while ( timeout < TIMEOUT_MAX ) {
+		let wallet_to = helper.random_i'tem(WALLETS);
+		for (let wallet_from  of WALLETS_ACCOUNT) {
+			setTimeout( () => sendTransaction(wallet_from, wallet_to) , timeout + Math.random() * 100);
+			process.stdout.write(iter);
+			iter += 1;
+		}
+		timeout += 1000;
+	}
 }
 
 
@@ -101,47 +125,6 @@ function startStress() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//ws.end()
 targets =  [
 	{  method: 'jt_blockNumber', params: []},
 	{  method: 'jt_getBalance', params: [WALLET_ROOT.address, 'validated']},
@@ -185,18 +168,11 @@ async function getBalance(address) {
 	}
 }
 
-async function activateAddress(account, amount) {
+async function sendTransaction(wallet_from, wallet_to) {
 	try {
-		let response = await helper.swtNodeRequest(helper.rpcSwtNodeParam({method: 'jt_getBalance', params: [account, 'validated']}));
-		result = response.data.result;
-		if (parseInt(result.balance) >= amount) {
-			console.log(`...${account} balance ${result.balance} already activated`);
-		} else {
-			console.log(`... activating ${account}`);
-			tryMethod({method: 'jt_sendTransaction', params: [{from: WALLET_ROOT.address, to: account, value: `${amount}`}]});
-		}
+		let response = await helper.swtNodeRequest(helper.rpcSwtNodeParam({method: 'jt_sendTransaction', params: [{from: wallet_from.address, to: wallet_to.address, value: '8'}]}));
 	} catch( error ) {
-		 console.warn(`!!! activation ${error}`)
+		 console.warn(`!!! sendtransaction ${error}`)
 	}
 }
 
