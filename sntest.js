@@ -47,7 +47,7 @@ try {
 	helper.writeFile('wallets.txt',JSON.stringify(WALLETS));
 }
 //WALLETS.forEach( wallet => { TIMEOUT += 2000; setTimeout( () => activateWallet(wallet, 30000000), TIMEOUT) });
-WALLETS.forEach( wallet => { TIMEOUT += 200; setTimeout( () => activateWallet(wallet, 30000000), TIMEOUT) });
+WALLETS.forEach( wallet => { TIMEOUT += 100; setTimeout( () => activateWallet(wallet, 30000000), TIMEOUT) });
 
 // make sure your have generated local accounts including the root account
 target_accounts = {method: 'jt_accounts', params: []};
@@ -67,7 +67,7 @@ helper.swtNodeRequest(helper.rpcSwtNodeParam({method: target_accounts.method, pa
 					for ( let account of ACCOUNTS ) {
 						WALLETS_ACCOUNT.push({address: account});
 					}
-					WALLETS_ACCOUNT.forEach( wallet => { TIMEOUT += 200; setTimeout( () => activateWallet(wallet, 100000000), TIMEOUT) });
+					WALLETS_ACCOUNT.forEach( wallet => { TIMEOUT += 100; setTimeout( () => activateWallet(wallet, 100000000), TIMEOUT) });
 					params_transaction = [{from: WALLET_ROOT.address, to: ACCOUNTS[0], value: "30"}];
 					targets2.push({ log: true, method:'jt_sign', params: [WALLETS_ACCOUNT[0].address,'0xdeadbeaf']});
 					targets2.push({ log: true, method:'jt_signTransaction', params: params_transaction});
@@ -93,7 +93,7 @@ function startStress() {
 			console.log(`testing using ${WALLETS_ACCOUNT.length} accounts`);
 			stress();
 		} else {
-			console.log("   ...please prepare more accounts(1000+, skywell.node account generate) and make sure root account is there")
+			console.log("   ...please prepare more accounts(300+, skywell.node account generate) and make sure root account is there")
 		}
 	} else {
 		console.log("   ...stressing...")
@@ -186,15 +186,15 @@ async function activateWallet(wallet, amount) {
 	try {
 		let response = await helper.swtNodeRequest(helper.rpcSwtNodeParam({method: 'jt_getBalance', params: [wallet.address, 'validated']}));
 		result = response.data.result;
-		if (parseInt(result.balance) >= amount) {
+		if (parseInt(result.balance) >= amount - 20000000) {
 			console.log(`...${wallet.address} balance ${result.balance} already activated`);
 			wallet.activated = true
 		} else {
 			console.log(`... activating ${wallet.address}`);
 			//tryMethod({method: 'jt_sendTransaction', params: [{from: WALLET_ROOT.address, to: wallet.address, value: `${amount}`}]});
 			TIMEOUT_ACT += 500;
-			setTimeout( () => activateWallet(wallet, 30000000), TIMEOUT_ACT);
 			setTimeout( () => tryMethod({description: 'activate account', method: 'jt_sendTransaction', params: [{from: WALLET_ROOT.address, to: wallet.address, value: `${amount}`}]}), TIMEOUT_ACT);
+			setTimeout( () => activateWallet(wallet, amount), TIMEOUT_ACT + 5000);
 			//setTimeout( () => tryMethod({method: 'jt_sendTransaction', params: [{from: WALLET_ROOT.address, to: wallet.address, value: `${amount}`}]}), Math.random() * 10000);
 		}
 	} catch( error ) {
