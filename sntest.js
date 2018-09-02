@@ -7,6 +7,8 @@ var ACCOUNTS = [];
 var WALLETS_ACCOUNT = [];
 var WALLETS = [];
 const TIMEOUT_MAX = 30000
+var STRESSING = false
+var iter = 0
 var TIMEOUT = 0;
 var TIMEOUT_ACT = 0;
 const ADDRESS_COUNT = 10;
@@ -67,7 +69,8 @@ helper.swtNodeRequest(helper.rpcSwtNodeParam({method: target_accounts.method, pa
 					}
 					WALLETS_ACCOUNT.forEach( wallet => { TIMEOUT += 200; setTimeout( () => activateWallet(wallet, 100000000), TIMEOUT) });
 					params_transaction = [{from: WALLET_ROOT.address, to: ACCOUNTS[0], value: "30"}];
-					targets2.push({ method:'jt_signTransaction', params: params_transaction});
+					targets2.push({ log: true, method:'jt_sign', params: [WALLETS_ACCOUNT[0].address,'0xdeadbeaf']});
+					targets2.push({ log: true, method:'jt_signTransaction', params: params_transaction});
 					targets2.push({ method: 'jt_sendTransaction', params: params_transaction });
 					tryMethods(targets2);
 				} else {
@@ -81,16 +84,16 @@ helper.swtNodeRequest(helper.rpcSwtNodeParam({method: target_accounts.method, pa
 //setTimeout( () => helper.readStream(`${LOGFILE}.txt`), 2000)
 setInterval( () => startStress() , TIMEOUT_MAX)
 
-var STRESSING = false
 function startStress() {
 	console.log(`... check if we can start generating transactions or not`);
 	filter_activated = (element) => element.hasOwnProperty('activated');
 	if ( ! STRESSING ) {
 		if ( WALLETS_ACCOUNT.filter(filter_activated).length == WALLETS_ACCOUNT.length  && WALLETS.filter(filter_activated).length == ADDRESS_COUNT ) {
-			console.log("   ...startstressing...")
+			console.log("   ...startstressing, send transaction from these accouts...")
+			console.log(WALLETS_ACCOUNT);
 			stress();
 		} else {
-			console.log("   ...please prepare more wallets or accounts(10+) and make sure root account is there")
+			console.log("   ...please prepare more accounts(5 to 10, skywell.node account generate) and make sure root account is there")
 		}
 	} else {
 		console.log("   ...stressing...")
@@ -99,16 +102,16 @@ function startStress() {
 
 function stress() {
 	let timeout = 1000
-	iter = 0
 	while ( timeout < TIMEOUT_MAX ) {
-		let wallet_to = helper.random_item(WALLETS);
-		for (let wallet_from  of WALLETS_ACCOUNT) {
-			setTimeout( () => sendTransaction(wallet_from, wallet_to) , timeout + Math.random() * 100);
-			process.stdout.write(`${iter}, `);
-			iter += 1;
-		}
+		WALLETS_ACCOUNT.forEach( (wallet_from,index,array) => {
+				setTimeout( () => sendTransaction(wallet_from, helper.random_item(WALLETS)) , timeout + Math.floor( index * 1000 / WALLETS_ACCOUNT.length ));
+				process.stdout.write(`${iter}, `);
+				iter += 1;
+			}
+		)
 		timeout += 1000;
 	}
+	console.log("...");
 }
 
 
@@ -138,7 +141,6 @@ targets =  [
 	//jt_getTransactionByBlockHashAndIndex
 	//jt_getTransactionByBlockNumberAndIndex
 	{ method: 'jt_getTransactionReceipt', params: ['CC903C5B2E96D93C950B07EAB9F45E041400FDB86070D7BBF799A7CB0AC0F0E7'] },
-	{ log: true, method:'jt_sign', params: ['jEwQbrKbSVgVkptbdv5vPmJKDFqmS2ehfW','0xdeadbeaf']},
 ];
 
 function tryMethods(targets) {
