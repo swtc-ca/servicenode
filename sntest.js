@@ -6,12 +6,12 @@ var SYNCED = false;
 var ACCOUNTS = [];
 var WALLETS_ACCOUNT = [];
 var WALLETS = [];
-const TIMEOUT_MAX = 30000
+const TIMEOUT_MAX = 60000
 var STRESSING = false
 var iter = 0
 var TIMEOUT = 0;
 var TIMEOUT_ACT = 0;
-const ADDRESS_COUNT = 10;
+const ADDRESS_COUNT = 100;
 const WALLET_ROOT = helper.WALLET_ROOT;
 const LOGFILE = moment().format('MMDDHHmm');
 var write_file = helper.writeStream(`${LOGFILE}.txt`);
@@ -90,10 +90,10 @@ function startStress() {
 	if ( ! STRESSING ) {
 		if ( WALLETS_ACCOUNT.filter(filter_activated).length == WALLETS_ACCOUNT.length  && WALLETS.filter(filter_activated).length == ADDRESS_COUNT ) {
 			console.log("   ...startstressing, send transaction from these accouts...")
-			console.log(WALLETS_ACCOUNT);
+			console.log(`testing using ${WALLETS_ACCOUNT.length} accounts`);
 			stress();
 		} else {
-			console.log("   ...please prepare more accounts(5 to 10, skywell.node account generate) and make sure root account is there")
+			console.log("   ...please prepare more accounts(1000+, skywell.node account generate) and make sure root account is there")
 		}
 	} else {
 		console.log("   ...stressing...")
@@ -101,17 +101,17 @@ function startStress() {
 }
 
 function stress() {
-	let timeout = 1000
+	let timeout = 0
 	while ( timeout < TIMEOUT_MAX ) {
 		WALLETS_ACCOUNT.forEach( (wallet_from,index,array) => {
-				setTimeout( () => sendTransaction(wallet_from, helper.random_item(WALLETS)) , timeout + Math.floor( index * 1000 / WALLETS_ACCOUNT.length ));
-				process.stdout.write(`${iter}, `);
+				setTimeout( () => sendTransaction(wallet_from, helper.random_item(WALLETS)) , timeout + Math.floor( 10 * index * 1000 / WALLETS_ACCOUNT.length ));
+				process.stdout.write(`.`);
 				iter += 1;
 			}
 		)
-		timeout += 1000;
+		console.log(`   ... ${iter}`);
+		timeout += 10000;
 	}
-	console.log("...");
 }
 
 
@@ -153,7 +153,11 @@ function tryMethods(targets) {
 async function tryMethod(target) {
 	try {
 		let response = await helper.swtNodeRequest(helper.rpcSwtNodeParam({method: target.method, params: target.params}))
-		console.log(`   ... ${target.method} works`);
+		if ( target.description ) {
+			console.log(`   ... ${target.description} works`);
+		} else {
+			console.log(`   ... ${target.method} works`);
+		}
 		if ( target.log ) {console.log(response.data.result)} 
 		write_file.write(helper.castString(response.data.result))
 	} catch( error ) {
@@ -188,9 +192,9 @@ async function activateWallet(wallet, amount) {
 		} else {
 			console.log(`... activating ${wallet.address}`);
 			//tryMethod({method: 'jt_sendTransaction', params: [{from: WALLET_ROOT.address, to: wallet.address, value: `${amount}`}]});
-			TIMEOUT_ACT += 1000;
+			TIMEOUT_ACT += 500;
 			setTimeout( () => activateWallet(wallet, 30000000), TIMEOUT_ACT);
-			setTimeout( () => tryMethod({method: 'jt_sendTransaction', params: [{from: WALLET_ROOT.address, to: wallet.address, value: `${amount}`}]}), TIMEOUT_ACT);
+			setTimeout( () => tryMethod({description: 'activate account', method: 'jt_sendTransaction', params: [{from: WALLET_ROOT.address, to: wallet.address, value: `${amount}`}]}), TIMEOUT_ACT);
 			//setTimeout( () => tryMethod({method: 'jt_sendTransaction', params: [{from: WALLET_ROOT.address, to: wallet.address, value: `${amount}`}]}), Math.random() * 10000);
 		}
 	} catch( error ) {
