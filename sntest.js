@@ -60,7 +60,7 @@ helper.swtNodeRequest(helper.rpcSwtNodeParam({method: target_accounts.method, pa
 					targets2 = []
 					// make sure local accounts are activated
 					for ( let account of ACCOUNTS ) {
-						WALLETS_ACCOUNT.push({address: account.address});
+						WALLETS_ACCOUNT.push({address: account});
 					}
 					WALLETS_ACCOUNT.forEach( wallet => { TIMEOUT += 2000; setTimeout( () => activateWallet(wallet, 100000000), TIMEOUT) });
 					params_transaction = [{from: WALLET_ROOT.address, to: ACCOUNTS[0], value: "30"}];
@@ -81,6 +81,7 @@ setInterval( () => startStress() , 10000)
 function startStress() {
 	console.log(`... check if we can start generating transactions or not`);
 	filter_activated = (element) => element.hasOwnProperty('activated');
+	WALLETS_ACCOUNT.filter(filter_activated).length > 10 || console.log("please prepare more accouns")
 	WALLETS.filter(filter_activated).length > 10 || console.log("please prepare more wallets")
 }
 
