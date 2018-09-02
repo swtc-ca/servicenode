@@ -101,7 +101,7 @@ function stress() {
 	let timeout = 1000
 	iter = 0
 	while ( timeout < TIMEOUT_MAX ) {
-		let wallet_to = helper.random_i'tem(WALLETS);
+		let wallet_to = helper.random_item(WALLETS);
 		for (let wallet_from  of WALLETS_ACCOUNT) {
 			setTimeout( () => sendTransaction(wallet_from, wallet_to) , timeout + Math.random() * 100);
 			process.stdout.write(iter);
